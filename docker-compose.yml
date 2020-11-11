@@ -1,0 +1,66 @@
+version: '3.5'
+
+networks:
+    frontend:
+      driver: ${DRIVER}
+    backend:
+      driver: ${DRIVER}
+services:
+    flask:
+        container_name: flask
+        build: ./fib/
+        depends_on: 
+            - mongo
+        restart: always
+        volumes:
+            - ./fib/:/app/api
+        environment:
+            - ${FLASK1}=${FLASK2}
+        ports :
+            - ${APP_SERVER_PORT}:${APP_SERVER_PORT}
+        networks:
+            - backend
+
+    mongo:
+        container_name: mongo
+        build:
+            context: ./docker/db
+            dockerfile: Dockerfile.mongodb
+            args:
+                - mongodb_username=${MONGODB_USERNAME}
+                - mongodb_password=${MONGODB_PASSWORD}
+                - mongodb_initdb_database=${MONGO_INITDB_DATABASE}
+                - mongodb_initdb_root_username=${MONGO_INITDB_ROOT_USERNAME}
+                - mongodb_initdb_root_password=${MONGO_INITDB_ROOT_PASSWORD}
+        restart: always
+        networks: 
+            - backend
+        volumes:
+            - ./.data/mongo:/data/db:rw
+            - ./.data/backups:/var/backups:rw
+            - ./docker/db/mongod.conf:/etc/mongod.conf
+        env_file:
+            - .env
+        ports:
+            - "${MONGODB_PORT}:${MONGODB_PORT}"
+        command: [--auth]
+
+    mongo-express:
+        container_name: mongo-express
+        image: mongo-express:0.49
+        restart: always
+        depends_on:
+            - mongo
+        environment:
+            - ME_CONFIG_BASICAUTH_USERNAME=${ME_CONFIG_BASICAUTH_USERNAME}
+            - ME_CONFIG_BASICAUTH_PASSWORD=${ME_CONFIG_BASICAUTH_PASSWORD}
+            - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
+            - ME_CONFIG_MONGODB_AUTH_DATABASE=${MONGO_INITDB_DATABASE}
+            - ME_CONFIG_MONGODB_AUTH_USERNAME=${MONGODB_USERNAME}
+            - ME_CONFIG_MONGODB_AUTH_PASSWORD=${MONGODB_PASSWORD}
+        links:
+            - mongo
+        networks:
+            - backend
+        ports:
+            - "${MONGO_EXPRESS_PORT}:${MONGO_EXPRESS_PORT}"
