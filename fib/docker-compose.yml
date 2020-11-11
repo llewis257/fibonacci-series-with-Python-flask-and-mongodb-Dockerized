@@ -1,0 +1,18 @@
+version: '3.5'
+
+networks:
+    backend:
+      driver: ${DRIVER}
+services:
+    flask:
+        container_name: flask
+        build: .
+        restart: always
+        volumes:
+            - .:/app/api
+        environment:
+            - ENV_FILE_LOCATION=./.env
+        ports :
+            - "5000:5000"
+        networks:
+            - backend
