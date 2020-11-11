@@ -1,0 +1,18 @@
+FROM mongo:4.2
+
+ARG mongodb_username
+ARG mongodb_password
+ARG mongodb_initdb_database
+ARG mongodb_initdb_root_username
+ARG mongodb_initdb_root_password
+
+COPY mongo-setup-1.js /docker-entrypoint-initdb.d/
+COPY mongo-setup-2.js /docker-entrypoint-initdb.d/
+COPY mongod.conf /etc/
+
+RUN sed -i -e "s/MONGO_INITDB_ROOT_USERNAME/$mongodb_initdb_root_username/g" /docker-entrypoint-initdb.d/mongo-setup-2.js
+RUN sed -i -e "s/MONGO_INITDB_ROOT_PASSWORD/$mongodb_initdb_root_password/g" /docker-entrypoint-initdb.d/mongo-setup-2.js
+RUN sed -i -e "s/MONGODB_USERNAME/$mongodb_username/g" /docker-entrypoint-initdb.d/mongo-setup-1.js
+RUN sed -i -e "s/MONGODB_PASSWORD/$mongodb_password/g" /docker-entrypoint-initdb.d/mongo-setup-1.js
+RUN sed -i -e "s/MONGO_INITDB_DATABASE/$mongodb_initdb_database/g" /docker-entrypoint-initdb.d/mongo-setup-1.js
+
